@@ -1,24 +1,16 @@
-# import logging
-# import sys
-
-# Uncomment to see debug logs
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-# logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
-# https://docs.llamaindex.ai/en/latest/examples/vector_stores/postgres.html
-
-
-from llama_index import SimpleDirectoryReader, StorageContext
-from llama_index.indices.vector_store import VectorStoreIndex
-from llama_index.vector_stores import PGVectorStore
-import textwrap
-import openai
 import os
-
+import weaviate
 from dotenv import load_dotenv
 load_dotenv() 
-
 key = os.getenv("OPENAI_API_KEY")
-openai.api_key = key
+# pip install --pre -U "weaviate-client==4.*"
+# connect to your weaviate instance
+try:
+    client = weaviate.Client(url="http://localhost:8080", additional_headers={ 'X-OpenAI-Api-Key': key})
+    print("connected")
+except Exception as e:
+    print(str(e))
 
-documents = SimpleDirectoryReader("files").load_data()
-print("Document ID:", documents[0].doc_id)
+
+
+# https://weaviate.io/developers/weaviate/tutorials/connect
