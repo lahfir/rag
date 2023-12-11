@@ -6,16 +6,22 @@ import openai
 
 class RAGChatbot:
     def __init__(self, openai_api_key,
-        index_name, directory='files',         
-        weaviate_uri="http://localhost:8080", 
+        index_name, directory='files', engine, weaviate_uri="http://localhost:8080", 
         system_prompt=None):
-
+        self.engine = engine 
         self.key = openai_api_key
         self.weaviate_uri = weaviate_uri
         self.directory = directory
         self.key = os.getenv("OPENAI_API_KEY")
         self.index_name = index_name
         self.system_prompt = system_prompt
+
+
+    
+    def set_prompt_with_context(self, context):
+        prompt = f"For the text in <<>> \
+        respond using the context in () <<{self.system_prompt}>> ({context}) :"
+
 
     def connect_to_vectordb(self):
         docs = SimpleDirectoryReader(self.directory).load_data()
@@ -47,6 +53,16 @@ class RAGChatbot:
         memory=memory, system_prompt=self.system_prompt)
         return chat_engine
 
+    def get_chat_completion(prompt):        
+        response = openai.Completion.create(
+            engine=“text-davinci-002”,
+            prompt=prompt,
+            temperature=0.5,
+            max_tokens=50,
+            n=1,
+            stop=None,
+            )
+
     def chat_loop(self):
         db, nodes = self.connect_to_vectordb()
         query_engine = self.get_query_engine(db, nodes)
@@ -58,15 +74,9 @@ class RAGChatbot:
                 break
             retrieval_result = vector_database.query(user_input)  # This line seems to be using an undefined variable
             if retrieval_result:
-                response = retrieval_result
+                context = retrieval_result
+                result = self.get_chat_completion(context=response)
+                print(result)
             else:
-                response = chat_engine(user_input)
-            print("Chatbot:", response)
-
-    def init_gpt_chat_client():
-        openai.api_key = 'your_openai_api_key'
-
-
-    def start_chat(self):
-        chat_engine = self.connect_to_chat_engine()
-        self.chat_loop(chat_engine)
+                result = self.get_chat_completion(context=response)
+            print("Chatbot:", response.choices[0].text)

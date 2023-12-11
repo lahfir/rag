@@ -1,3 +1,4 @@
+#!/bin/bash
 docker run -d \
   --name weaviate \
   -p 8080:8080 \
