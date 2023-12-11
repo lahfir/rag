@@ -23,12 +23,12 @@ class RAGChatbot:
         try:
             client = weaviate.Client(url=self.weaviate_uri)
             print("Connected to Weaviate")
-            return client
+            return client, nodes
         except Exception as e:
             print(f"Failed to connect to Weaviate: {str(e)}")
             return
 
-    def get_query_engine(self, client):
+    def get_query_engine(self, client, nodes):
         try:
             vector_store = WeaviateVectorStore(weaviate_client=client, index_name=self.index_name, text_key="content")
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -47,8 +47,8 @@ class RAGChatbot:
         return chat_engine
 
     def chat_loop(self):
-        db = self.connect_to_vectordb()
-        query_engine = self.get_query_engine(db)
+        db, nodes = self.connect_to_vectordb()
+        query_engine = self.get_query_engine(db, nodes)
 
         while True:
             user_input = input("You: ")
