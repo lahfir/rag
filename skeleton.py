@@ -30,7 +30,7 @@ class RAGChatbot:
 
     def get_query_engine(self, client):
         try:
-            vector_store = WeaviateVectorStore(weaviate_client=client, index_name="DataIndex", text_key="content")
+            vector_store = WeaviateVectorStore(weaviate_client=client, index_name=self.index_name, text_key="content")
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
             index = VectorStoreIndex(nodes, storage_context=storage_context)
             query_engine = index.as_query_engine()
@@ -46,7 +46,10 @@ class RAGChatbot:
         memory=memory, system_prompt="Your system prompt here")
         return chat_engine
 
-    def chat_loop(self, chat_engine):
+    def chat_loop(self):
+        db = self.connect_to_vectordb()
+        query_engine = self.get_query_engine(db)
+
         while True:
             user_input = input("You: ")
             if user_input.lower() == "exit":
