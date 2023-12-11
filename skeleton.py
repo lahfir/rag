@@ -45,13 +45,13 @@ class RAGChatbot:
         except Exception as e:
             print(str(e))
 
-    def connect_to_chat_engine(self):
-        data = SimpleDirectoryReader(input_dir=self.directory).load_data()
-        index = VectorStoreIndex.from_documents(data)
-        memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
-        chat_engine = index.as_chat_engine(chat_mode="context", \
-        memory=memory, system_prompt=self.system_prompt)
-        return chat_engine
+    # def connect_to_chat_engine(self):
+    #     data = SimpleDirectoryReader(input_dir=self.directory).load_data()
+    #     index = VectorStoreIndex.from_documents(data)
+    #     memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
+    #     chat_engine = index.as_chat_engine(chat_mode="context", \
+    #     memory=memory, system_prompt=self.system_prompt)
+    #     return chat_engine
 
     def get_chat_completion(prompt):        
         response = openai.Completion.create(
@@ -72,11 +72,12 @@ class RAGChatbot:
             if user_input.lower() == "exit":
                 print("Chatbot: Goodbye!")
                 break
-            retrieval_result = vector_database.query(user_input)  # This line seems to be using an undefined variable
+            retrieval_result = query_engine.query(user_input)  # This line seems to be using an undefined variable
             if retrieval_result:
                 context = retrieval_result
+                response = self.set_prompt_with_context(context)
                 result = self.get_chat_completion(context=response)
-                print(result)
+                print(result.choices[0].text)
             else:
                 result = self.get_chat_completion(context=response)
             print("Chatbot:", response.choices[0].text)
