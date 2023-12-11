@@ -15,6 +15,7 @@ class RAGChatbot:
         self.directory = directory
         self.key = os.getenv("OPENAI_API_KEY")
         self.index_name = index_name
+        self.system_prompt = system_prompt
 
     def connect_to_vectordb(self):
         docs = SimpleDirectoryReader(self.directory).load_data()
@@ -43,7 +44,7 @@ class RAGChatbot:
         index = VectorStoreIndex.from_documents(data)
         memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
         chat_engine = index.as_chat_engine(chat_mode="context", \
-        memory=memory, system_prompt="Your system prompt here")
+        memory=memory, system_prompt=self.system_prompt)
         return chat_engine
 
     def chat_loop(self):
@@ -61,6 +62,10 @@ class RAGChatbot:
             else:
                 response = chat_engine(user_input)
             print("Chatbot:", response)
+
+    def init_gpt_chat_client():
+        openai.api_key = 'your_openai_api_key'
+
 
     def start_chat(self):
         chat_engine = self.connect_to_chat_engine()
