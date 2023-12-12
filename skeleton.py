@@ -83,10 +83,10 @@ class RAGChatbot:
                 context = retrieval_result
                 response = self.set_prompt_with_context(context)
                 result = self.get_chat_completion(response)
-                print(response['choices'][0]['message']['content'])
+                print(result['choices'][0]['message']['content'])
             else:
-                response = self.get_chat_completion(response)
-                print("Chatbot:", response['choices'][0]['message']['content'])
+                result = self.get_chat_completion(response)
+                print("Chatbot:", result['choices'][0]['message']['content'])
                 
 
 
