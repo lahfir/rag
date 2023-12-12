@@ -66,7 +66,7 @@ class RAGChatbot:
             {"role": "user", "content": prompt}
         ]
         )
-        print(response)
+        # print(response)
         return response
 
     def chat_loop(self):
