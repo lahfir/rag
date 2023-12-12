@@ -1,25 +1,37 @@
 import os
 import weaviate
 from dotenv import load_dotenv
-from llama_index import SimpleDirectoryReader, SimpleNodeParser, WeaviateVectorStore, VectorStoreIndex, ChatMemoryBuffer
+from llama_index import SimpleDirectoryReader
+from llama_index.node_parser import SimpleNodeParser
+from llama_index.vector_stores import WeaviateVectorStore
+from llama_index import VectorStoreIndex, StorageContext
 import openai
+from openai import OpenAI
+
+
+load_dotenv()
+client = OpenAI()
+key = os.getenv("OPENAI_API_KEY")
+openai.api_key = key
 
 class RAGChatbot:
-    def __init__(self, openai_api_key,
-        index_name, directory='files', engine, weaviate_uri="http://localhost:8080", 
-        system_prompt=None):
+    def __init__(self, openai_api_key = key,
+        index_name="RAG", directory='files', engine="gpt-3.5-turbo", \
+        weaviate_uri="http://localhost:8080", \
+        system_prompt="Answer all questions in the style of Mike Tyson. Very agressive"):
+
         self.engine = engine 
         self.key = openai_api_key
         self.weaviate_uri = weaviate_uri
         self.directory = directory
-        self.key = os.getenv("OPENAI_API_KEY")
+        self.key = openai_api_key
         self.index_name = index_name
         self.system_prompt = system_prompt
 
 
     
     def set_prompt_with_context(self, context):
-        prompt = f"For the text in <<>> \
+        return f"For the text in <<>> \
         respond using the context in () <<{self.system_prompt}>> ({context}) :"
 
 
@@ -45,23 +57,17 @@ class RAGChatbot:
         except Exception as e:
             print(str(e))
 
-    # def connect_to_chat_engine(self):
-    #     data = SimpleDirectoryReader(input_dir=self.directory).load_data()
-    #     index = VectorStoreIndex.from_documents(data)
-    #     memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
-    #     chat_engine = index.as_chat_engine(chat_mode="context", \
-    #     memory=memory, system_prompt=self.system_prompt)
-    #     return chat_engine
+    def get_chat_completion(self,prompt):        
 
-    def get_chat_completion(prompt):        
-        response = openai.Completion.create(
-            engine=“text-davinci-002”,
-            prompt=prompt,
-            temperature=0.5,
-            max_tokens=50,
-            n=1,
-            stop=None,
-            )
+        response = client.chat.completions.create(
+        model=self.engine,
+        messages=[
+            {"role": "system", "content": f"{self.system_prompt}"},
+            {"role": "user", "content": prompt}
+        ]
+        )
+        print(response)
+        return response
 
     def chat_loop(self):
         db, nodes = self.connect_to_vectordb()
@@ -76,8 +82,14 @@ class RAGChatbot:
             if retrieval_result:
                 context = retrieval_result
                 response = self.set_prompt_with_context(context)
-                result = self.get_chat_completion(context=response)
-                print(result.choices[0].text)
+                result = self.get_chat_completion(str(response))
+                print(result.choices[0])
             else:
-                result = self.get_chat_completion(context=response)
-            print("Chatbot:", response.choices[0].text)
+                result = self.get_chat_completion(response)
+                print("Chatbot:", response.choices[0].text)
+                
+
+
+
+chat = RAGChatbot()
+chat.chat_loop()
