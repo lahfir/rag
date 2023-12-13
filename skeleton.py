@@ -5,21 +5,29 @@ from llama_index import SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
 from llama_index.vector_stores import WeaviateVectorStore
 from llama_index import VectorStoreIndex, StorageContext
-import openai
+# import openai
 from openai import OpenAI
+from langchain.utilities import BingSearchAPIWrapper
+
+bing_key = os.getenv("BING_SUBSCRIPTION_KEY")
+os.environ["BING_SEARCH_URL"] = "https://api.bing.microsoft.com/v7.0/search"
 
 
 load_dotenv()
 client = OpenAI()
 key = os.getenv("OPENAI_API_KEY")
-openai.api_key = key
+# openai.api_key = key
+
+
+
 
 class RAGChatbot:
     def __init__(self, openai_api_key = key,
         index_name="RAG", directory='files', engine="gpt-3.5-turbo", \
         weaviate_uri="http://localhost:8080", \
-        system_prompt="Answer all questions in the style of Mike Tyson. Very agressive"):
+        system_prompt="Answer all questions like Jarvis from Iron Man"):
 
+        self.search = BingSearchAPIWrapper(k=1)
         self.engine = engine 
         self.key = openai_api_key
         self.weaviate_uri = weaviate_uri
@@ -27,6 +35,14 @@ class RAGChatbot:
         self.key = openai_api_key
         self.index_name = index_name
         self.system_prompt = system_prompt
+
+
+    
+    def search_web(self, query):
+
+        val =  self.search.results(query,num_results=3)
+        print(val)
+        return val
 
 
     
@@ -70,19 +86,23 @@ class RAGChatbot:
         return response
 
     def chat_loop(self):
-        db, nodes = self.connect_to_vectordb()
-        query_engine = self.get_query_engine(db, nodes)
+        # db, nodes = self.connect_to_vectordb()
+        # query_engine = self.get_query_engine(db, nodes)
 
         while True:
             user_input = input("You: ")
+            search_result  = self.search_web(user_input)
             if user_input.lower() == "exit":
                 print("Chatbot: Goodbye!")
                 break
-            retrieval_result = query_engine.query(user_input)  # This line seems to be using an undefined variable
-            if retrieval_result:
-                context = retrieval_result
-                response = self.set_prompt_with_context(context)
-                result = self.get_chat_completion(response)
+            # retrieval_result = query_engine.query(user_input)  # This line seems to be using an undefined variable
+            # if retrieval_result:
+            if search_result:
+                # context = retrieval_result
+                # response = self.set_prompt_with_context(context)
+                
+                result = self.get_chat_completion(str(search_result))
+
                 # print(result['choices'][0]['message']['content'])
                 print("Chatbot: ",result.choices[0].message.content)
 
